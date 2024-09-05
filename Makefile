@@ -14,7 +14,7 @@ run: FORCE
 		echo "Container $(container_name) is not running"; \
 		/opt/X11/bin/xhost +; \
 		open -a xquartz; \
-		docker run -t -d --rm --name $(container_name) -e DISPLAY=docker.for.mac.host.internal:0 -v /tmp/.X11-unix:/tmp/.X11-unix -v $(PWD):/work/ -v $(PWD)/home/rstudio:/home/rstudio -p 8789:8787 -e DISABLE_AUTH=true $(image_name) /bin/bash; \
+		docker run -t -d --rm --name $(container_name) -e DISPLAY=docker.for.mac.host.internal:0 -v /tmp/.X11-unix:/tmp/.X11-unix -v $(PWD):/work/ $(image_name) /bin/bash; \
 	fi
 
 b: run
