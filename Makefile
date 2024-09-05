@@ -63,6 +63,6 @@ clean:
 	rm -fR $(OBJ_PATH) 
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(TARGETS)
 
 re: fclean all

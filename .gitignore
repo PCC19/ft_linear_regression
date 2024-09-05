@@ -18,4 +18,5 @@ form-init*
 .RData
 .RHistory
 /aux
+/obj
 
