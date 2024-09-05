@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "stdlib.h"
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string>
@@ -26,54 +27,77 @@ bool file_exists(const std::string& filename) {
   return (stat (filename.c_str(), &buffer) == 0); 
 }
 
-void initialize_theta_parameters(const std::string& filename) {
-    std::ofstream outFile(filename.c_str());
-    if (outFile.is_open()) {
-        outFile << 0 << std::endl;
-        outFile << 0 << std::endl;
-        outFile.close();
-        std::cout << "File created and numbers written successfully." << std::endl;
-        outFile.close();
-    } else {
-        std::cerr << "Error creating the file." << std::endl;
+void initialize_theta_parameters(const std::string& file_name) {
+
+    std::cout << "file_name " << file_name << std::endl;
+    if (file_exists(file_name)) {
+        std::cout << "Parameters Theta file found !" << std::endl; }
+    else {
+        std::ofstream outFile(file_name.c_str());
+        std::cout <<  "Initialasing theta parameters file ... " << std::endl;
+        if (outFile.is_open()) {
+            outFile << 0 << std::endl;
+            outFile << 0 << std::endl;
+            outFile.close();
+            std::cout << "File created and numbers written successfully." << std::endl;
+            outFile.close();
+        }
+        else {
+            std::cerr << "Error creating the file." << std::endl;
+        }
     }
 }
+bool validate_input(const std::string& input) {
+    // Check if the input is empty
+    if (input.empty()) return false;
 
-void generate_point_file_for_gnuplot(const std::string& filename, double theta0, double theta1) {
-    std::ofstream outFile(filename.c_str());
-    if (outFile.is_open()) {
-        outFile << theta0 << std::endl;
-        outFile << theta1<< std::endl;
-        outFile.close();
-        std::cout << "File created and numbers written successfully." << std::endl;
-        outFile.close();
-    } else {
-        std::cerr << "Error creating the file." << std::endl;
+    // Allow for an optional leading negative sign
+    size_t startIndex = 0;
+    if (input[0] == '-') {
+        startIndex = 1;
     }
+    // Check each character in the string
+    for (size_t i = startIndex; i < input.length(); ++i) {
+        if (!isdigit(input[i])) {
+            return false; // Found a non-digit character
+        }
+    }
+    // Check if positive
+    if (atof(input.c_str()) < 0){
+        std::cout << "Mileage must be positive !!!" << std::endl;
+        return false;
+    };
+    return true; // All characters were digits
 }
 
+void print_graph(double theta0, double theta1, double mileage) {
+        std::ostringstream oss;
+
+        oss << "gnuplot -p -c \"./src/plot.gnu\" " << theta0 << " " << theta1 << " " << mileage << std::endl;
+        std::string tmp = oss.str();
+//        std::cout << "string: " << tmp << std::endl;
+        system(tmp.c_str());
+}
 
 int main() {
     const std::string       file_name = "theta";
+    std::string             input;
     double                  mileage, pred_mileage;
     double                  theta0, theta1;
     std::string             flag;
 
     // Initizalize parameters file
-    std::cout << "Hello, World predict!" << std::endl;  // Output "Hello, World!" to the console
-    if (file_exists(file_name)) {
-        std::cout << "Parameters Theta file found !" << std::endl; }
-    else {
-        std::cout <<  "Initialasing theta parameters file ... " << std::endl;
-        initialize_theta_parameters(file_name);
-    };
+    initialize_theta_parameters(file_name);
     // Prompt for user input
     std::cout << "Please input mileage: " << std::endl;
-    std::cin >> mileage;
-    if (mileage < 0){
-        std::cout << "Mileage must be positive !!!" << std::endl;
+    std::cin >> input;
+    if (!validate_input(input)) {
+        std::cout << "Invalid mileage !!" << :: std::endl;
         return 1;
-    };
+    }
+    else {
+        mileage = atof(input.c_str());
+    }
     // Check parameter file
     std::ifstream           inputFile(file_name.c_str());
     if (!inputFile) {
@@ -93,20 +117,11 @@ int main() {
     std::cout <<"Predicted price: " << pred_mileage << std::endl;
     // Close the file
     inputFile.close();
-
     // Plot graph ?
-    std::cout << "Do you want to plot the graph ?" << std::endl;
+    std::cout << "Do you want to plot the graph ? (y/n))" << std::endl;
     std::cin >> flag;
     if (flag == "y") {
-        std::cout << "Print\n";
-        generate_point_file_for_gnuplot("point.dat", theta0, theta1);
-        std::ostringstream oss; // Create a string stream
-        oss << "gnuplot -p -c \"./src/plot.gnu\" " << theta0 << " " << theta1 << " " << mileage << std::endl; // Concatenate the string and doubles
-        std::string tmp;
-        tmp = oss.str();
-        std::cout << "string: " << tmp << std::endl;
-        system(tmp.c_str());
+        print_graph(theta0, theta1, mileage);
     }
-
     return 0;  // Return 0 to indicate successful execution
 }
