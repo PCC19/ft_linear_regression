@@ -1,7 +1,10 @@
+#include "stdio.h"
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <cstdlib>
 #include <iostream>  // Include the iostream library for input and output
                      //
 //- [ ] Se nao existir arquivo
@@ -30,38 +33,31 @@ void initialize_theta_parameters(const std::string& filename) {
         outFile << 0 << std::endl;
         outFile.close();
         std::cout << "File created and numbers written successfully." << std::endl;
+        outFile.close();
     } else {
         std::cerr << "Error creating the file." << std::endl;
     }
 }
 
-//ibool isNumber(const std::string& str) {
-//    for (char c : str) {
-//        if (!isdigit(c)) {
-//            return false;
-//        }
-//    }
-//    return true;
-//}
-
-//double get_mileage(void){
-//    double mileage;
-//
-//    std::cout << "Please input mileage: " << std::endl;
-//    std::cin >> mileage;
-//    if (mileage < 0){
-//        std::cout << "Mileage must be positive !!!";
-//    };
-//    return (mileage);
-//}
-
+void generate_point_file_for_gnuplot(const std::string& filename, double theta0, double theta1) {
+    std::ofstream outFile(filename.c_str());
+    if (outFile.is_open()) {
+        outFile << theta0 << std::endl;
+        outFile << theta1<< std::endl;
+        outFile.close();
+        std::cout << "File created and numbers written successfully." << std::endl;
+        outFile.close();
+    } else {
+        std::cerr << "Error creating the file." << std::endl;
+    }
+}
 
 
 int main() {
     const std::string       file_name = "theta";
-    std::ifstream           inputFile(file_name.c_str());
     double                  mileage, pred_mileage;
     double                  theta0, theta1;
+    std::string             flag;
 
     // Initizalize parameters file
     std::cout << "Hello, World predict!" << std::endl;  // Output "Hello, World!" to the console
@@ -79,6 +75,7 @@ int main() {
         return 1;
     };
     // Check parameter file
+    std::ifstream           inputFile(file_name.c_str());
     if (!inputFile) {
         std::cerr << "Error opening file!" << std::endl;
         return 1; // Exit with an error code
@@ -93,10 +90,23 @@ int main() {
     // Calculates prediciton
     pred_mileage = theta0 + theta1 * mileage;
     // Display the output
-    std::cout <<"Predicted mileage: " << pred_mileage << std::endl;
-
+    std::cout <<"Predicted price: " << pred_mileage << std::endl;
     // Close the file
     inputFile.close();
+
+    // Plot graph ?
+    std::cout << "Do you want to plot the graph ?" << std::endl;
+    std::cin >> flag;
+    if (flag == "y") {
+        std::cout << "Print\n";
+        generate_point_file_for_gnuplot("point.dat", theta0, theta1);
+        std::ostringstream oss; // Create a string stream
+        oss << "gnuplot -p -c \"./src/plot.gnu\" " << theta0 << " " << theta1 << " " << mileage << std::endl; // Concatenate the string and doubles
+        std::string tmp;
+        tmp = oss.str();
+        std::cout << "string: " << tmp << std::endl;
+        system(tmp.c_str());
+    }
 
     return 0;  // Return 0 to indicate successful execution
 }
