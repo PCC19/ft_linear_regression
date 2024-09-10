@@ -42,6 +42,18 @@ std::pair<std::vector<double>, std::vector<double> > readCSV(const std::string& 
     return std::make_pair(column1, column2); // Return the vectors
 }
 
+std::vector<double> minus(const std::vector<double>& vec1, const std::vector<double>& vec2) {
+    if (vec1.size() != vec2.size()) {
+        throw std::runtime_error("Vectors must have the same size.");
+    }
+    std::vector<double> result(vec1.size());
+    for (size_t i = 0; i < vec1.size(); ++i) {
+        result[i] = vec1[i] - vec2[i];
+    }
+
+    return result;
+}
+
 int main() {
     // Call the function and get the vectors
     std::pair<std::vector<double>, std::vector<double> > columns = readCSV("data.csv");
@@ -50,6 +62,13 @@ int main() {
     for (size_t i = 0; i < columns.first.size(); i++) {
         std::cout << "Column 1: " << columns.first[i] << ", Column 2: " << columns.second[i] << std::endl;
     }
+
+    std::vector<double> dif;
+    dif = minus(columns.first, columns.second);
+    for (size_t i = 0; i < columns.first.size(); i++) {
+        std::cout << "Dif: " << dif[i] << std::endl;
+    }
+
 //
 //    std::ifstream file("data.csv");
 //    std::string line;
