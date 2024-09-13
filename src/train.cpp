@@ -113,11 +113,11 @@ int main() {
         double tmp1 = 0;
         double tmpError = 0;
         for (int j = 0; j < m; j++) {
-            double eY = estimate(X[j], t0, t1);
-            tmp0 += eY - Y[j];
-            tmp1 += (eY - Y[j]) * X[j];
-            tmpError += abs(eY - Y[j]);
-                std::cout << "X: " << X[j] << " |Y: " << Y[j] << " |est: " << eY << " | " << (eY - Y[j]) * X[j] << " |error: " << abs(eY - Y[j]) << std::endl;
+            double Yp = estimate(X[j], t0, t1);
+            tmp0 += Yp - Y[j];
+            tmp1 += (Yp - Y[j]) * X[j];
+            tmpError += abs(Yp - Y[j]);
+                std::cout << "X: " << X[j] << " |Y: " << Y[j] << " |est: " << Yp << " | " << (Yp - Y[j]) * X[j] << " |error: " << abs(Yp - Y[j]) << std::endl;
         }
         t0 -= tmp0 * (learningRate / m);
         t1 -= tmp1 * (learningRate / m);
@@ -137,19 +137,24 @@ int main() {
 
     } // while
 
-    // Output X, Y and eY to file
-    std::ofstream myfile;
-    myfile.open ("output_data.txt");
+    // Output X, Y and Yp to file
+    std::ofstream file1;
+    file1.open ("output_data.txt");
     for (size_t i = 0; i < columns.first.size(); i++) {
-        myfile << X[i] << " " << Y[i] << " " << t0 + t1*X[i] << std::endl;
+        file1 << X[i] << " " << Y[i] << " " << t0 + t1*X[i] << std::endl;
     }
+    file1.close();
     // Output error to file
-    myfile.close();
-    std::ofstream myfile2;
-    myfile2.open ("output_error.txt");
+    std::ofstream file2;
+    file2.open ("output_error.txt");
     for (size_t i = 1; i < e.size(); i++) {
-        myfile2 << i << " " << e[i] - e[i - 1] << std::endl;
+        file2 << i << " " << abs(e[i]) << " " << abs(e[i] - e[i - 1]) << std::endl;
     }
-    myfile2.close();
+    file2.close();
+    // Output theta parameters to file
+    std::ofstream file3;
+    file3.open ("theta");
+    file3 << t0 << std::endl << t1 << std::endl;
+    file3.close();
 
 }
