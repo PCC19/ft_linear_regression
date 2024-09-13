@@ -7,7 +7,7 @@
 #include "stdlib.h"
 #include <limits>
 #include <math.h>
-
+#include <algorithm>
 
 std::pair<std::vector<double>, std::vector<double> > readCSV(const std::string& filename) {
     std::ifstream file(filename.c_str());
@@ -48,31 +48,31 @@ double estimate(double X, double t0, double t1){
     return (t0 + t1*X);
 }
 
-// perplexity
-double hypothesis(double x, const std::vector<double>& theta) {
-    return theta[0] + theta[1] * x;  // theta[0] is the intercept, theta[1] is the slope
-}
-void gradientDescent(const std::vector<double>& X, const std::vector<double>& y, std::vector<double>& theta, int n, double alpha, int iterations) {
-    for (int iter = 0; iter < iterations; iter++) {
-        double sum0 = 0.0; // For theta[0] (intercept)
-        double sum1 = 0.0; // For theta[1] (slope)
-        
-        for (int i = 0; i < n; i++) {
-            double h = hypothesis(X[i], theta); // Predicted value
-            sum0 += h - y[i]; // Error for intercept
-            sum1 += (h - y[i]) * X[i]; // Error for slope
-                std::cout << "X: " << X[i] << " |y: " << y[i] << " |est: " << h << " | " << (h - y[i]) * X[i] << " |error: " << abs(h - y[i]) << std::endl;
-        }
-        
-        // Update theta values
-        theta[0] -= (alpha / n) * sum0; // Update intercept
-        theta[1] -= (alpha / n) * sum1; // Update slope
-                std::cout << "t0: " << theta[0] <<  " | t1: " << theta[1] << std::endl;
-                std::cout << "-----------\n";
+std::vector<double> normalize(std::vector<double>& v, double v_max, double v_min){
+    std::vector<double> vn;
+    for (size_t i = 0; i < v.size(); i++) {
+        vn.push_back((v[i] - v_min) / (v_max - v_min));
     }
+    return vn;
 }
-// ---------------------
 
+std::vector<double> denormalize(std::vector<double>& v, double v_max, double v_min){
+    std::vector<double> vn;
+    for (size_t i = 0; i < v.size(); i++) {
+        vn.push_back(v[i] * (v_max - v_min) + v_min);
+    }
+    return vn;
+}
+
+double max(std::vector<double> &x){
+    double m = *std::max_element(x.begin(), x.end());
+    return m;
+}
+
+double min(std::vector<double> &x){
+    double m = *std::min_element(x.begin(), x.end());
+    return m;
+}
 
 int main() {
     // Load data from file
@@ -82,41 +82,26 @@ int main() {
         return 1;
     }
 
-    // Output the results
-    for (size_t i = 0; i < columns.first.size(); i++) {
-        std::cout << "Column 1: " << columns.first[i] << ", Column 2: " << columns.second[i] << std::endl;
-    }
-
     std::vector<double> X = columns.first;
     std::vector<double> Y = columns.second;
 
+    X = normalize(X, max(X), min(X));
+    Y = normalize(Y, max(Y), min(Y));
 
-// perplexity
+    // Output the file contents read
+    for (size_t i = 0; i < columns.first.size(); i++) {
+        std::cout << "Column 1: " << columns.first[i] << ", | Column 2: " << columns.second[i];
+        std::cout << " | Xn : " << X[i] << ", | Yn: " << Y[i] << std::endl;
+    }
 
-    std::vector<double> theta; // theta[0] for intercept, theta[1] for slope
-        theta.push_back(0.0);
-        theta.push_back(0.0);
-    double alpha = 0.00001; // Learning rate
-    int iterations = 10; // Number of iterations
-    int n = X.size();
-
-    // Perform gradient descent to fit the model
-    gradientDescent(X, Y, theta, n, alpha, iterations);
-
-    // Output the learned parameters
-    std::cout << "Learned parameters:\n";
-    std::cout << "Intercept (theta[0]): " << theta[0] << std::endl;
-    std::cout << "Slope (theta[1]): " << theta[1] << std::endl;
-
-    return 0;
-
-// Calculate the regression coeficients
+    // Calculate the regression coeficients
     double t0 = 0;
     double t1 = 0;
-    double learningRate = 0.01;
-    double eps = 0.1;
-    int max_iter = 10;
+    double learningRate = 0.1;
+    double eps = 1e-8;
+    int max_iter = 10000;
     double error = std::numeric_limits<double>::infinity();
+    std::vector<double> e;
 
 
     int i = 0;
@@ -148,7 +133,23 @@ int main() {
         if (abs(error - tmpError) < eps) { cont = false; };
         if (i >= max_iter) {cont = false; };
         error = tmpError;
+        e.push_back(error);
 
     } // while
+
+    // Output X, Y and eY to file
+    std::ofstream myfile;
+    myfile.open ("output_data.txt");
+    for (size_t i = 0; i < columns.first.size(); i++) {
+        myfile << X[i] << " " << Y[i] << " " << t0 + t1*X[i] << std::endl;
+    }
+    // Output error to file
+    myfile.close();
+    std::ofstream myfile2;
+    myfile2.open ("output_error.txt");
+    for (size_t i = 1; i < e.size(); i++) {
+        myfile2 << i << " " << e[i] - e[i - 1] << std::endl;
+    }
+    myfile2.close();
 
 }
