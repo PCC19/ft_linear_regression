@@ -11,7 +11,6 @@ set ylabel "Price"
 # Set grid
 set grid
 
-
 # Define the point from the data file
 set datafile separator ","  # Set the separator if necessary
 

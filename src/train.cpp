@@ -82,7 +82,7 @@ int main() {
         std::cout << "Dataset must have at least 2 data points\n";
         return 1;
     }
-
+    // Create data vectors and normalize
     std::vector<double> X_raw = columns.first;
     std::vector<double> Y_raw = columns.second;
 
@@ -91,23 +91,24 @@ int main() {
 
     // Output the file contents read
     for (size_t i = 0; i < columns.first.size(); i++) {
-        std::cout << "Column 1: " << columns.first[i] << ", | Column 2: " << columns.second[i];
-        std::cout << " | Xn : " << X[i] << ", | Yn: " << Y[i] << std::endl;
+        std::cout << "Column 1: " << columns.first[i] << ", \t\t| Column 2: " << columns.second[i];
+        std::cout << " \t\t| Xn : " << X[i] << ", \t\t| Yn: " << Y[i] << std::endl;
     }
 
     // Calculate the regression coeficients
     double t0 = 0;
     double t1 = 0;
-    double learningRate = 0.1;
+    double learningRate = 0.01;
     double eps = 1e-6;
     int max_iter = 10000;
     double error = std::numeric_limits<double>::infinity();
     std::vector<double> e;
     std::string flag;
 
-
     int i = 0;
     bool cont = true;
+    std::ofstream arq;
+    arq.open ("train.txt");
     while (cont){
         i++;
         int m = X.size();
@@ -119,48 +120,40 @@ int main() {
             tmp0 += Yp - Y[j];
             tmp1 += (Yp - Y[j]) * X[j];
             tmpError += abs(Yp - Y[j]);
-            tmpError += sqrt((Yp - Y[j]) * (Yp - Y[j]));
-                std::cout << "X: " << X[j] << " |Y: " << Y[j] << " |est: " << Yp << " | " << (Yp - Y[j]) * X[j] << " |error: " << abs(Yp - Y[j]) << std::endl;
+            tmpError += (Yp - Y[j]) * (Yp - Y[j]);
         }
         t0 -= tmp0 * (learningRate / m);
         t1 -= tmp1 * (learningRate / m);
-        tmpError = tmpError / m;
+        tmpError = sqrt(tmpError / m);
 
-                std::cout << "i: " << i << "\t";
-                std::cout << "t0: " << t0 << "\t";
-                std::cout << "t1: " << t1 << "\t";
-                std::cout << "error: " << error << "\t";
-                std::cout << "tmp_error: " << tmpError << std::endl;
-                std::cout << "-----------------------------------------" << std::endl;
+        arq << t0 << " " << t1 << " " << tmpError << std::endl;
 
-        if (abs(error - tmpError) < eps) { cont = false; };
-        if (i >= max_iter) {cont = false; };
+        if (abs(error - tmpError) < eps) { std::cout << i << " [Stop: max iter reached]\n"; cont = false; };
+        if (i >= max_iter) {std::cout << i << " [Stop: min delta error reached]\n"; cont = false; };
         error = tmpError;
         e.push_back(error);
 
     } // while
+    arq.close();
 
     // Output X, Y and Yp to file
-    std::ofstream file1;
-    file1.open ("output_data.txt");
+    arq.open ("output_data.txt");
     for (size_t i = 0; i < columns.first.size(); i++) {
-        file1 << X[i] << " " << Y[i] << " " << t0 + t1*X[i] << std::endl;
+        arq << X[i] << " " << Y[i] << " " << t0 + t1*X[i] << std::endl;
     }
-    file1.close();
+    arq.close();
     // Output error to file
-    std::ofstream file2;
-    file2.open ("output_error.txt");
+    arq.open ("output_error.txt");
     for (size_t i = 1; i < e.size(); i++) {
-        file2 << i << " " << abs(e[i]) << " " << abs(e[i] - e[i - 1]) << std::endl;
+        arq << i << " " << abs(e[i]) << " " << abs(e[i] - e[i - 1]) << std::endl;
     }
-    file2.close();
+    arq.close();
     // Output theta parameters to file
-    std::ofstream file3;
-    file3.open ("theta");
-    file3 << t0 << std::endl << t1 << std::endl;
-    file3 << max(X_raw) << std::endl << min(X_raw) << std::endl;
-    file3 << max(Y_raw) << std::endl << min(Y_raw) << std::endl;
-    file3.close();
+    arq.open ("theta");
+    arq << t0 << std::endl << t1 << std::endl;
+    arq << max(X_raw) << std::endl << min(X_raw) << std::endl;
+    arq << max(Y_raw) << std::endl << min(Y_raw) << std::endl;
+    arq.close();
     // Plot graphs
     std::cout << "Do you want to plot the graph ? (y/n))" << std::endl;
     std::cin >> flag;
@@ -168,6 +161,28 @@ int main() {
         plot_graphs("plot_train.gnu");
         plot_graphs("plot_training_error.gnu");
         plot_graphs("plot_delta_error.gnu");
-    }
 
+        // Generate 2d plot of error vs theta parameters
+        int n = 20;
+        double xi = 0;  // 6500
+        double xf = 2;  // 10500
+        double yi = 0;  // -0.5
+        double yf = -2; // 0.5
+
+        arq.open ("grid.txt");
+        for (int i = 0; i < n; i++) {
+            for (int k = 0; k < n; k++) {
+                t0 = xi + i * (xf - xi) / n;
+                t1 = yi + k * (yf - yi) / n;
+                double tmpError = 0;
+                for (size_t j = 0; j < X.size(); j++) {
+                    double Yp = estimate(X[j], t0, t1);
+                    tmpError += sqrt((Yp - Y[j]) * (Yp - Y[j]));
+                }
+                arq << t0 << " " << t1 << " " << tmpError << std::endl;
+            }
+        }
+        arq.close();
+        plot_graphs("plot_grid.gnu");
+    }
 }
