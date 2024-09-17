@@ -82,11 +82,11 @@ int main() {
         return 1;
     }
 
-    std::vector<double> X = columns.first;
-    std::vector<double> Y = columns.second;
+    std::vector<double> X_raw = columns.first;
+    std::vector<double> Y_raw = columns.second;
 
-    X = normalize(X, max(X), min(X));
-    Y = normalize(Y, max(Y), min(Y));
+    std::vector<double> X = normalize(X_raw, max(X_raw), min(X_raw));
+    std::vector<double> Y = normalize(Y_raw, max(Y_raw), min(Y_raw));
 
     // Output the file contents read
     for (size_t i = 0; i < columns.first.size(); i++) {
@@ -155,6 +155,8 @@ int main() {
     std::ofstream file3;
     file3.open ("theta");
     file3 << t0 << std::endl << t1 << std::endl;
+    file3 << max(X_raw) << std::endl << min(X_raw) << std::endl;
+    file3 << max(Y_raw) << std::endl << min(Y_raw) << std::endl;
     file3.close();
 
 }

@@ -36,8 +36,12 @@ void initialize_theta_parameters(const std::string& file_name) {
         std::ofstream outFile(file_name.c_str());
         std::cout <<  "Initialasing theta parameters file ... " << std::endl;
         if (outFile.is_open()) {
-            outFile << 0 << std::endl;
-            outFile << 0 << std::endl;
+            outFile << 0 << std::endl; // t0
+            outFile << 0 << std::endl; // t1
+            outFile << 0 << std::endl; // x_max
+            outFile << 0 << std::endl; // x_min
+            outFile << 0 << std::endl; // y_max
+            outFile << 0 << std::endl; // y min
             outFile.close();
             std::cout << "File created and numbers written successfully." << std::endl;
             outFile.close();
@@ -47,6 +51,7 @@ void initialize_theta_parameters(const std::string& file_name) {
         }
     }
 }
+
 bool validate_input(const std::string& input) {
     // Check if the input is empty
     if (input.empty()) return false;
@@ -70,12 +75,46 @@ bool validate_input(const std::string& input) {
     return true; // All characters were digits
 }
 
-void print_graph(double theta0, double theta1, double mileage) {
+double predict(double mileage, double t0, double t1, double X_max, double X_min, double Y_max, double Y_min){
+    // Normalize input
+    double x = (mileage - X_min) / (X_max - X_min); 
+    // Calculates prediciton
+    double y = t0 + t1 * x;
+    // Denormalize output
+    return (y * (Y_max - Y_min) + Y_min);
+}
+
+void generate_point_data(double x, double y){
+        std::ofstream outFile("point_data.txt");
+        std::cout <<  "Writing point data ..." << std::endl;
+        if (outFile.is_open()) {
+            outFile << "x y" << std::endl;
+            outFile << x << " " << y << std::endl;
+        }
+        std::cout << "File created and numbers written successfully." << std::endl;
+        outFile.close();
+}
+
+void generate_line_data(double t0, double t1, double X_max, double X_min, double Y_max, double Y_min){
+        std::ofstream outFile("line_data.txt");
+        std::cout <<  "Writing line data ..." << std::endl;
+        outFile << "x y" << std::endl;
+        for (int i = X_min; i < X_max; i += (X_max - X_min)/100){
+            if (outFile.is_open()) {
+                outFile << i << " ";
+                outFile << predict(i, t0, t1, X_max, X_min, Y_max, Y_min) << std::endl;
+            }
+        }
+        std::cout << "File created and numbers written successfully." << std::endl;
+        outFile.close();
+}
+
+void print_graph() {
         std::ostringstream oss;
 
-        oss << "gnuplot -p -c \"./src/plot.gnu\" " << theta0 << " " << theta1 << " " << mileage << std::endl;
+        oss << "gnuplot -p -c \"./src/plot.gnu\"" << std::endl;
         std::string tmp = oss.str();
-//        std::cout << "string: " << tmp << std::endl;
+        std::cout << "string: " << tmp << std::endl;
         system(tmp.c_str());
 }
 
@@ -83,7 +122,8 @@ int main() {
     const std::string       file_name = "theta";
     std::string             input;
     double                  mileage, pred_mileage;
-    double                  theta0, theta1;
+    double                  t0, t1;
+    double                  X_max, X_min, Y_max, Y_min;
     std::string             flag;
 
     // Initizalize parameters file
@@ -104,15 +144,14 @@ int main() {
         std::cerr << "Error opening file!" << std::endl;
         return 1; // Exit with an error code
     }
-    // Read two numbers from the file
-    inputFile >> theta0 >> theta1;
+    // Read parameters from file
+    inputFile >> t0 >> t1 >> X_max >> X_min >> Y_max >> Y_min;
     // Check if the read operation was successful
     if (inputFile.fail()) {
         std::cerr << "Error reading numbers from the file!" << std::endl;
         return 1; // Exit with an error code
     }
-    // Calculates prediciton
-    pred_mileage = theta0 + theta1 * mileage;
+    pred_mileage = predict(mileage, t0, t1, X_max, X_min, Y_max, Y_min);
     // Display the output
     std::cout <<"Predicted price: " << pred_mileage << std::endl;
     // Close the file
@@ -121,7 +160,9 @@ int main() {
     std::cout << "Do you want to plot the graph ? (y/n))" << std::endl;
     std::cin >> flag;
     if (flag == "y") {
-        print_graph(theta0, theta1, mileage);
+        generate_point_data(mileage, pred_mileage);
+        generate_line_data(t0, t1, X_max, X_min, Y_max, Y_min);
+        print_graph();
     }
     return 0;  // Return 0 to indicate successful execution
 }
