@@ -56,14 +56,6 @@ std::vector<double> normalize(std::vector<double>& v, double v_max, double v_min
     return vn;
 }
 
-std::vector<double> denormalize(std::vector<double>& v, double v_max, double v_min){
-    std::vector<double> vn;
-    for (size_t i = 0; i < v.size(); i++) {
-        vn.push_back(v[i] * (v_max - v_min) + v_min);
-    }
-    return vn;
-}
-
 double max(std::vector<double> &x){
     double m = *std::max_element(x.begin(), x.end());
     return m;
@@ -72,6 +64,15 @@ double max(std::vector<double> &x){
 double min(std::vector<double> &x){
     double m = *std::min_element(x.begin(), x.end());
     return m;
+}
+
+void plot_graphs(std::string filename) {
+        std::ostringstream oss;
+
+        oss << "gnuplot -p -c \"./src/" << filename << "\"" << std::endl;
+        std::string tmp = oss.str();
+        std::cout << "string: " << tmp << std::endl;
+        system(tmp.c_str());
 }
 
 int main() {
@@ -98,10 +99,11 @@ int main() {
     double t0 = 0;
     double t1 = 0;
     double learningRate = 0.1;
-    double eps = 1e-8;
+    double eps = 1e-6;
     int max_iter = 10000;
     double error = std::numeric_limits<double>::infinity();
     std::vector<double> e;
+    std::string flag;
 
 
     int i = 0;
@@ -117,6 +119,7 @@ int main() {
             tmp0 += Yp - Y[j];
             tmp1 += (Yp - Y[j]) * X[j];
             tmpError += abs(Yp - Y[j]);
+            tmpError += sqrt((Yp - Y[j]) * (Yp - Y[j]));
                 std::cout << "X: " << X[j] << " |Y: " << Y[j] << " |est: " << Yp << " | " << (Yp - Y[j]) * X[j] << " |error: " << abs(Yp - Y[j]) << std::endl;
         }
         t0 -= tmp0 * (learningRate / m);
@@ -158,5 +161,13 @@ int main() {
     file3 << max(X_raw) << std::endl << min(X_raw) << std::endl;
     file3 << max(Y_raw) << std::endl << min(Y_raw) << std::endl;
     file3.close();
+    // Plot graphs
+    std::cout << "Do you want to plot the graph ? (y/n))" << std::endl;
+    std::cin >> flag;
+    if (flag == "y") {
+        plot_graphs("plot_train.gnu");
+        plot_graphs("plot_training_error.gnu");
+        plot_graphs("plot_delta_error.gnu");
+    }
 
 }

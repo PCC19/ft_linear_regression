@@ -64,5 +64,7 @@ clean:
 
 fclean: clean
 	rm -f $(TARGETS)
+	rm -f theta
+	rm -f *.txt
 
 re: fclean all
